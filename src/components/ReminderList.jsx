@@ -47,7 +47,13 @@ function ReminderRow({ item, onToggle, onEdit, onDelete }) {
         <div>
           {dateLabel(item)}
           <Text className="!block !text-xs !text-slate-400">
-            {item.emailSentAt ? "Email sent" : item.completed ? "Completed" : "Email pending"}
+            {item.completed
+              ? "Completed"
+              : item.emailSuppressed
+                ? "Test email disabled"
+                : item.emailSentAt
+                  ? "Email sent"
+                  : "Email pending"}
           </Text>
         </div>
       </div>
