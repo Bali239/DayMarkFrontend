@@ -11,10 +11,15 @@ export default function useAuth() {
   const dispatch = useDispatch();
   const queryClient = useQueryClient();
   const { token, user, status } = useSelector((state) => state.auth);
-  const config = useQuery({ queryKey: ["auth", "config"], queryFn: () => request("/auth/config", ""), staleTime: Infinity });
+  const config = useQuery({
+    queryKey: ["auth", "config"],
+    queryFn: () => request("/auth/config", ""),
+    staleTime: Infinity,
+  });
 
   const signIn = useMutation({
-    mutationFn: (credential) => request("/auth/google", "", { method: "POST", body: JSON.stringify({ credential }) }),
+    mutationFn: (credential) =>
+      request("/auth/google", "", { method: "POST", body: JSON.stringify({ credential }) }),
     onSuccess: (session) => {
       window.sessionStorage.setItem(SESSION_STORAGE_KEY, session.token);
       dispatch(setSession({ token: session.token, user: session.user }));
@@ -24,7 +29,11 @@ export default function useAuth() {
 
   const logout = useCallback(async () => {
     window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
-    try { await request("/auth/logout", token, { method: "POST" }); } catch { /* Clear the in-memory session when offline. */ }
+    try {
+      await request("/auth/logout", token, { method: "POST" });
+    } catch {
+      /* Clear the in-memory session when offline. */
+    }
     dispatch(clearSession());
     dispatch(setFilter("Overview"));
     dispatch(setQuery(""));
@@ -37,15 +46,23 @@ export default function useAuth() {
     queryClient.removeQueries({ queryKey: ["reminders"] });
   }, [dispatch, queryClient]);
 
-  const setUser = useCallback((nextUser) => dispatch(updateUser(typeof nextUser === "function" ? nextUser(user) : nextUser)), [dispatch, user]);
+  const setUser = useCallback(
+    (nextUser) => dispatch(updateUser(typeof nextUser === "function" ? nextUser(user) : nextUser)),
+    [dispatch, user],
+  );
 
-  const handleGoogleCredential = useCallback(async (response) => {
-    if (!response?.credential) return false;
-    try {
-      await signInWithGoogle(response.credential);
-      return true;
-    } catch { return false; }
-  }, [signInWithGoogle]);
+  const handleGoogleCredential = useCallback(
+    async (response) => {
+      if (!response?.credential) return false;
+      try {
+        await signInWithGoogle(response.credential);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [signInWithGoogle],
+  );
 
   return {
     token,

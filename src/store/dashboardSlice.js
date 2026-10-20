@@ -4,10 +4,20 @@ const dashboardSlice = createSlice({
   name: "dashboard",
   initialState: { filter: "Overview", query: "", page: 1, pageSize: 8 },
   reducers: {
-    setFilter(state, action) { state.filter = action.payload; state.page = 1; },
-    setQuery(state, action) { state.query = action.payload; },
-    setPage(state, action) { state.page = action.payload; },
-    setPageSize(state, action) { state.pageSize = action.payload; state.page = 1; },
+    setFilter(state, action) {
+      state.filter = action.payload;
+      state.page = 1;
+    },
+    setQuery(state, action) {
+      state.query = action.payload;
+    },
+    setPage(state, action) {
+      state.page = action.payload;
+    },
+    setPageSize(state, action) {
+      state.pageSize = action.payload;
+      state.page = 1;
+    },
   },
 });
 

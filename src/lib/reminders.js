@@ -3,9 +3,17 @@ export const SESSION_STORAGE_KEY = "daymark_session_token";
 
 export const notificationOptions = [0, 5, 15, 30, 60, 1440];
 
-export const optionLabel = (minutes) => minutes === 0 ? "At due time" : minutes === 1440 ? "1 day" : minutes === 60 ? "1 hour" : `${minutes} minutes`;
+export const optionLabel = (minutes) =>
+  minutes === 0
+    ? "At due time"
+    : minutes === 1440
+      ? "1 day"
+      : minutes === 60
+        ? "1 hour"
+        : `${minutes} minutes`;
 
-export const localDate = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+export const localDate = (date = new Date()) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
 export const dueIso = (date, time) => {
   const [year, month, day] = date.split("-").map(Number);
@@ -21,14 +29,20 @@ export const isPastDue = (date, time, now = new Date()) => {
   return Number.isNaN(dueAt.getTime()) || dueAt < now;
 };
 
-export const minimumDateTime = (date = new Date()) => `${localDate(date)}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+export const minimumDateTime = (date = new Date()) =>
+  `${localDate(date)}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 
 export const dateLabel = (item) => {
   const parsed = new Date(item.dueAt);
   const today = new Date();
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const day = parsed.toDateString() === today.toDateString() ? "Today" : parsed.toDateString() === tomorrow.toDateString() ? "Tomorrow" : parsed.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const day =
+    parsed.toDateString() === today.toDateString()
+      ? "Today"
+      : parsed.toDateString() === tomorrow.toDateString()
+        ? "Tomorrow"
+        : parsed.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   return `${day} · ${parsed.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
 };
 
@@ -42,12 +56,22 @@ export const fromApi = (item) => {
   };
 };
 
-export const initialForm = () => ({ title: "", description: "", date: localDate(), time: `${String(new Date().getHours()).padStart(2, "0")}:00`, category: "Personal" });
+export const initialForm = () => ({
+  title: "",
+  description: "",
+  date: localDate(),
+  time: `${String(new Date().getHours()).padStart(2, "0")}:00`,
+  category: "Personal",
+});
 
 export async function request(path, token, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
-    headers: { ...(options.body ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers },
+    headers: {
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
   });
   const result = await response.json().catch(() => null);
   if (!response.ok) throw new Error(result?.message || `Request failed (${response.status})`);
@@ -60,6 +84,8 @@ export const reminderStats = (items) => {
     upcoming: items.filter((item) => !item.completed && new Date(item.dueAt) >= now).length,
     completed: items.filter((item) => item.completed).length,
     overdue: items.filter((item) => !item.completed && new Date(item.dueAt) < now).length,
-    today: items.filter((item) => !item.completed && new Date(item.dueAt).toDateString() === now.toDateString()).length,
+    today: items.filter(
+      (item) => !item.completed && new Date(item.dueAt).toDateString() === now.toDateString(),
+    ).length,
   };
 };

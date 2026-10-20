@@ -9,8 +9,14 @@ const authSlice = createSlice({
       state.user = action.payload.user;
       state.status = "authenticated";
     },
-    setUser(state, action) { state.user = action.payload; },
-    clearSession(state) { state.token = ""; state.user = null; state.status = "unauthenticated"; },
+    setUser(state, action) {
+      state.user = action.payload;
+    },
+    clearSession(state) {
+      state.token = "";
+      state.user = null;
+      state.status = "unauthenticated";
+    },
   },
 });
 

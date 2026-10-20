@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,css}\" next.config.mjs eslint.config.mjs jsconfig.json",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,ts,tsx,css}\" next.config.mjs eslint.config.mjs jsconfig.json"
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.4",
@@ -32,6 +34,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
+    "prettier": "^3.9.10",
     "tailwindcss": "^4"
   }
 }
