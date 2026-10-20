@@ -10,6 +10,7 @@ import Sidebar from "@/components/Sidebar";
 import TopBar from "@/components/TopBar";
 import useAuth from "@/hooks/useAuth";
 import useReminders from "@/hooks/useReminders";
+import usePushNotifications from "@/hooks/usePushNotifications";
 import { initialForm } from "@/lib/reminders";
 import { Alert, Spin } from "antd";
 import DeleteReminderConfirmation from "@/components/DeleteReminderConfirmation";
@@ -21,6 +22,7 @@ export default function Home() {
     clearSession: auth.clearSession,
     setUser: auth.setUser,
   });
+  const pushNotifications = usePushNotifications(auth.token, auth.user.id, auth.user.pushEnabled);
 
   const [modal, setModal] = useState(false);
   const [editing, setEditing] = useState(null);
@@ -113,6 +115,7 @@ export default function Home() {
               user={auth.user}
               advance={dashboard.advance}
               onAdvance={dashboard.saveAdvance}
+              pushNotifications={pushNotifications}
             />
           )}
         </div>
