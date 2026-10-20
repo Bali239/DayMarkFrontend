@@ -1,3 +1,7 @@
-// The shared dashboard gates this route on an in-memory Google session.
-// Reloading the route requires Google sign-in again because browser storage is disabled by design.
-export { default } from "../page";
+import ReminderRoute from "@/components/ReminderRoute";
+
+export const metadata = { title: "Your reminders — Daymark", description: "Your Daymark reminder dashboard." };
+
+export default function ReminderPage() {
+  return <ReminderRoute />;
+}
