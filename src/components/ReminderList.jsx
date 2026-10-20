@@ -172,22 +172,20 @@ export default function ReminderList({
           </Empty>
         </div>
       )}
-      {total > pagination.pageSize && (
-        <div className="flex justify-center border-t border-slate-100 px-3 py-4">
-          <Pagination
-            current={pagination.page}
-            pageSize={pagination.pageSize}
-            total={total}
-            showSizeChanger
-            pageSizeOptions={[8, 16, 32]}
-            showTotal={(itemTotal, range) => `${range[0]}–${range[1]} of ${itemTotal}`}
-            onChange={(page, nextPageSize) => {
-              if (nextPageSize !== pagination.pageSize) setPageSize(nextPageSize);
-              else setPage(page);
-            }}
-          />
-        </div>
-      )}
+      <div className="flex justify-center border-t border-slate-100 px-3 py-4">
+        <Pagination
+          current={pagination.page}
+          pageSize={pagination.pageSize}
+          total={total}
+          showSizeChanger
+          pageSizeOptions={[8, 16, 32]}
+          showTotal={(itemTotal, range) => `${range[0]}–${range[1]} of ${itemTotal}`}
+          onChange={(page, nextPageSize) => {
+            if (nextPageSize !== pagination.pageSize) setPageSize(nextPageSize);
+            else setPage(page);
+          }}
+        />
+      </div>
       <div className="flex flex-col gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <span>
           Showing{" "}

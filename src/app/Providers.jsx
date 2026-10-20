@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 import { Provider as ReduxProvider } from "react-redux";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { ConfigProvider } from "antd";
 import { Toaster } from "sonner";
 import { makeStore } from "@/store";
 import { clearSession, setSession } from "@/store/authSlice";
 import { request, SESSION_STORAGE_KEY } from "@/lib/reminders";
+import { restoreDashboard } from "@/store/dashboardSlice";
+
+const DASHBOARD_STORAGE_KEY = "daymark_dashboard_state";
 
 function SessionBootstrap() {
   const dispatch = useDispatch();
@@ -32,6 +35,38 @@ function SessionBootstrap() {
         }
       });
   }, [dispatch]);
+
+  return null;
+}
+
+function DashboardStateBootstrap() {
+  const dispatch = useDispatch();
+  const dashboard = useSelector((state) => state.dashboard);
+  const [restored, setRestored] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = window.sessionStorage.getItem(DASHBOARD_STORAGE_KEY);
+      if (saved) dispatch(restoreDashboard(JSON.parse(saved)));
+    } catch {
+      // Ignore invalid or unavailable persisted state and use the defaults.
+    } finally {
+      setRestored(true);
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!restored) return;
+    try {
+      const { filter, page, pageSize } = dashboard;
+      window.sessionStorage.setItem(
+        DASHBOARD_STORAGE_KEY,
+        JSON.stringify({ filter, page, pageSize }),
+      );
+    } catch {
+      // The dashboard continues to work if browser storage is unavailable.
+    }
+  }, [dashboard, restored]);
 
   return null;
 }
@@ -71,6 +106,7 @@ export default function Providers({ children }) {
       <ReduxProvider store={store}>
         <QueryClientProvider client={queryClient}>
           <SessionBootstrap />
+          <DashboardStateBootstrap />
           {children}
           <Toaster
             position="bottom-center"

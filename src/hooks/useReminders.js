@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
@@ -14,14 +14,18 @@ export default function useReminders(token, auth) {
   const view = useSelector((state) => state.dashboard);
   const [error, setError] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState(view.query);
+  const previousQuery = useRef(view.query);
   const queryKey = useMemo(
     () => ["reminders", token, view.filter, debouncedQuery, view.page, view.pageSize],
     [token, view.filter, debouncedQuery, view.page, view.pageSize],
   );
 
   useEffect(() => {
+    if (previousQuery.current === view.query) return;
+    const nextQuery = view.query;
     const timeout = window.setTimeout(() => {
-      setDebouncedQuery(view.query);
+      previousQuery.current = nextQuery;
+      setDebouncedQuery(nextQuery);
       dispatch(setPage(1));
     }, 500);
     return () => window.clearTimeout(timeout);
