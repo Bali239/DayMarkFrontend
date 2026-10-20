@@ -26,7 +26,7 @@ export default function useAuth() {
     window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
     try { await request("/auth/logout", token, { method: "POST" }); } catch { /* Clear the in-memory session when offline. */ }
     dispatch(clearSession());
-    dispatch(setFilter("Upcoming"));
+    dispatch(setFilter("Overview"));
     dispatch(setQuery(""));
     queryClient.removeQueries({ queryKey: ["reminders"] });
   }, [dispatch, queryClient, token]);

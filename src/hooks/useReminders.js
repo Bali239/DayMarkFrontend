@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
-import { dueIso, fromApi, isPastDue, reminderStats, request } from "@/lib/reminders";
-import { setFilter, setQuery } from "@/store/dashboardSlice";
+import { dueIso, fromApi, isPastDue, request } from "@/lib/reminders";
+import { setFilter, setPage, setPageSize, setQuery } from "@/store/dashboardSlice";
 
 export default function useReminders(token, auth) {
   const { clearSession, setUser } = auth;
@@ -13,20 +13,31 @@ export default function useReminders(token, auth) {
   const dispatch = useDispatch();
   const view = useSelector((state) => state.dashboard);
   const [error, setError] = useState("");
-  const queryKey = useMemo(() => ["reminders", token], [token]);
+  const [debouncedQuery, setDebouncedQuery] = useState(view.query);
+  const queryKey = useMemo(() => ["reminders", token, view.filter, debouncedQuery, view.page, view.pageSize], [token, view.filter, debouncedQuery, view.page, view.pageSize]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedQuery(view.query);
+      dispatch(setPage(1));
+    }, 500);
+    return () => window.clearTimeout(timeout);
+  }, [view.query, dispatch]);
 
   const remindersQuery = useQuery({
     queryKey,
     enabled: Boolean(token),
     queryFn: async () => {
       try {
-        const data = await request("/reminders", token);
-        return { reminders: data.reminders.map(fromApi), advance: data.reminderAdvanceMinutes };
+        const params = new URLSearchParams({ page: String(view.page), pageSize: String(view.pageSize), filter: view.filter, search: debouncedQuery });
+        const data = await request(`/reminders?${params.toString()}`, token);
+        return { ...data, reminders: data.reminders.map(fromApi), advance: data.reminderAdvanceMinutes };
       } catch (cause) {
         if (/session|authentication/i.test(cause.message)) clearSession();
         throw cause;
       }
     },
+    placeholderData: keepPreviousData,
     refetchInterval: token ? 60_000 : false,
   });
 
@@ -40,7 +51,7 @@ export default function useReminders(token, auth) {
     toast.error(cause.message || "Something went wrong. Please try again.");
   }, [clearSession]);
 
-  const invalidate = useCallback(() => queryClient.invalidateQueries({ queryKey }), [queryClient, queryKey]);
+  const invalidate = useCallback(() => queryClient.invalidateQueries({ queryKey: ["reminders"] }), [queryClient]);
   const saveMutation = useMutation({
     mutationFn: ({ form, editing }) => {
       const body = { title: form.title.trim(), description: form.description.trim(), dueAt: dueIso(form.date, form.time), category: form.category };
@@ -68,15 +79,7 @@ export default function useReminders(token, auth) {
   });
 
   const reminders = useMemo(() => remindersQuery.data?.reminders || [], [remindersQuery.data]);
-  const stats = useMemo(() => reminderStats(reminders), [reminders]);
-  const shown = useMemo(() => reminders.filter((item) => {
-    const matchesQuery = `${item.title} ${item.description} ${item.category}`.toLowerCase().includes(view.query.toLowerCase());
-    const matchesFilter = view.filter === "Upcoming" ? !item.completed && new Date(item.dueAt) >= new Date()
-      : view.filter === "Completed" ? item.completed
-      : view.filter === "Overdue" ? !item.completed && new Date(item.dueAt) < new Date()
-      : true;
-    return matchesQuery && matchesFilter;
-  }).sort((a, b) => new Date(a.dueAt) - new Date(b.dueAt)), [reminders, view.filter, view.query]);
+  const stats = remindersQuery.data?.stats || { upcoming: 0, completed: 0, overdue: 0, today: 0 };
 
   const saveReminder = useCallback(async (event, form, editing, closeModal) => {
     event.preventDefault();
@@ -110,11 +113,15 @@ export default function useReminders(token, auth) {
   }, [advanceMutation, handleFailure]);
 
   return {
-    reminders, stats, advance: remindersQuery.data?.advance ?? 15,
+    reminders, shown: reminders, total: remindersQuery.data?.pagination?.total ?? 0,
+    pagination: remindersQuery.data?.pagination ?? { page: view.page, pageSize: view.pageSize, total: 0, totalPages: 0 },
+    stats, advance: remindersQuery.data?.advance ?? 15,
     filter: view.filter, setFilter: (value) => dispatch(setFilter(value)),
     query: view.query, setQuery: (value) => dispatch(setQuery(value)),
+    setPage: (value) => dispatch(setPage(value)), setPageSize: (value) => dispatch(setPageSize(value)),
     error: error || (remindersQuery.error && !/session|authentication/i.test(remindersQuery.error.message) ? remindersQuery.error.message : ""),
-    setError, busy: saveMutation.isPending, shown,
-    loading: remindersQuery.isLoading, saveReminder, toggleDone, removeReminder, saveAdvance,
+    setError, busy: saveMutation.isPending,
+    loading: remindersQuery.isLoading, fetching: remindersQuery.isFetching,
+    saveReminder, toggleDone, removeReminder, saveAdvance,
   };
 }

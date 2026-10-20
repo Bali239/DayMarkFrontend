@@ -1,4 +1,6 @@
-import { Button, Card, Checkbox, Empty, Input, Segmented, Tag, Typography } from "antd";
+"use client";
+
+import { Button, Card, Checkbox, Empty, Input, Pagination, Segmented, Tag, Typography } from "antd";
 import { ArrowRightOutlined, CalendarOutlined, CheckCircleFilled, DeleteOutlined, EditOutlined, PlusOutlined, SearchOutlined } from "@ant-design/icons";
 import { dateLabel } from "@/lib/reminders";
 
@@ -14,11 +16,15 @@ function ReminderRow({ item, onToggle, onEdit, onDelete }) {
   </article>;
 }
 
-export default function ReminderList({ reminders, shown, filter, setFilter, query, setQuery, onToggle, onEdit, onDelete, onNew }) {
+export default function ReminderList({ reminders, shown, total, pagination, filter, setFilter, query, setQuery, setPage, setPageSize, onToggle, onEdit, onDelete, onNew }) {
+  const listFilter = filter === "Overview" ? "Upcoming" : filter;
+  const pageStart = (pagination.page - 1) * pagination.pageSize;
+
   return <Card className="!mb-6 !overflow-hidden !rounded-2xl !border-slate-200/80 !shadow-sm !shadow-slate-900/[0.02]" styles={{ body: { padding: 0 } }}>
-    <div className="flex flex-col gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-end sm:justify-between sm:p-6"><div><Text className="!text-xs !font-semibold !tracking-[0.15em] !text-violet-700">YOUR LIST</Text><Title level={3} className="!mb-1 !mt-2">{filter === "Upcoming" ? "Coming up" : filter}</Title><Text type="secondary">{filter === "Upcoming" ? "The things you want to make time for." : "A clear view of what’s on your plate."}</Text></div><Button type="link" className="!self-start !px-0 sm:!self-auto" onClick={() => setFilter("All reminders")}>View all <ArrowRightOutlined /></Button></div>
-    <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"><Segmented options={["Upcoming", "All reminders", "Completed", "Overdue"]} value={filter} onChange={setFilter} className="max-w-full overflow-x-auto" /><Input aria-label="Search reminders" placeholder="Search reminders" prefix={<SearchOutlined />} allowClear value={query} onChange={(event) => setQuery(event.target.value)} className="!w-full sm:!max-w-64" /></div>
+    <div className="flex flex-col gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-end sm:justify-between sm:p-6"><div><Text className="!text-xs !font-semibold !tracking-[0.15em] !text-violet-700">YOUR LIST</Text><Title level={3} className="!mb-1 !mt-2">{listFilter === "Upcoming" ? "Coming up" : listFilter}</Title><Text type="secondary">{listFilter === "Upcoming" ? "The things you want to make time for." : "A clear view of what’s on your plate."}</Text></div><Button type="link" className="!self-start !px-0 sm:!self-auto" onClick={() => setFilter("All reminders")}>View all <ArrowRightOutlined /></Button></div>
+    <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"><Segmented options={["Upcoming", "All reminders", "Completed", "Overdue"]} value={listFilter} onChange={setFilter} className="max-w-full overflow-x-auto" /><Input aria-label="Search reminders" placeholder="Search reminders" prefix={<SearchOutlined />} allowClear value={query} onChange={(event) => setQuery(event.target.value)} className="!w-full sm:!max-w-64" /></div>
     {shown.length ? <div>{shown.map((item) => <ReminderRow key={item.id} item={item} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete} />)}</div> : <div className="px-5 py-12"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={<div><Text strong className="!block">{query ? "No matching reminders" : "Nothing on this list"}</Text><Text type="secondary">{query ? "Try another search." : "Enjoy the breathing room, or add a reminder when something comes to mind."}</Text></div>}>{!query && <Button type="primary" icon={<PlusOutlined />} onClick={onNew}>Add a reminder</Button>}</Empty></div>}
-    <div className="flex flex-col gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6"><span>Showing <b className="text-slate-700">{shown.length}</b> of <b className="text-slate-700">{reminders.length}</b> reminders</span><span className="inline-flex items-center gap-2"><CheckCircleFilled className="text-emerald-600" /> Synced with your account</span></div>
+    {total > pagination.pageSize && <div className="flex justify-center border-t border-slate-100 px-3 py-4"><Pagination current={pagination.page} pageSize={pagination.pageSize} total={total} showSizeChanger pageSizeOptions={[8, 16, 32]} showTotal={(itemTotal, range) => `${range[0]}–${range[1]} of ${itemTotal}`} onChange={(page, nextPageSize) => { if (nextPageSize !== pagination.pageSize) setPageSize(nextPageSize); else setPage(page); }} /></div>}
+    <div className="flex flex-col gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6"><span>Showing <b className="text-slate-700">{total ? pageStart + 1 : 0}–{Math.min(pageStart + pagination.pageSize, total)}</b> of <b className="text-slate-700">{total}</b> reminders</span><span className="inline-flex items-center gap-2"><CheckCircleFilled className="text-emerald-600" /> Synced with your account</span></div>
   </Card>;
 }

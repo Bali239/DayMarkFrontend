@@ -46,9 +46,9 @@ export default function Home() {
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-7 sm:py-8 lg:px-10">
         <DashboardHeading user={auth.user} onNew={openNew} />
         {dashboard.error && <Alert className="!mb-5 !rounded-xl" type="error" showIcon closable onClose={() => dashboard.setError("")} message={dashboard.error} />}
-        <ReminderStats stats={dashboard.stats} />
-        <ReminderList reminders={dashboard.reminders} shown={dashboard.shown} filter={dashboard.filter} setFilter={dashboard.setFilter} query={dashboard.query} setQuery={dashboard.setQuery} onToggle={dashboard.toggleDone} onEdit={openEdit} onDelete={setDeleting} onNew={openNew} />
-        <DashboardFooter user={auth.user} advance={dashboard.advance} onAdvance={dashboard.saveAdvance} />
+        {dashboard.filter === "Overview" && <ReminderStats stats={dashboard.stats} />}
+        {dashboard.filter !== "Overview" && <ReminderList key={dashboard.filter} reminders={dashboard.reminders} shown={dashboard.shown} total={dashboard.total} pagination={dashboard.pagination} filter={dashboard.filter} setFilter={dashboard.setFilter} query={dashboard.query} setQuery={dashboard.setQuery} setPage={dashboard.setPage} setPageSize={dashboard.setPageSize} onToggle={dashboard.toggleDone} onEdit={openEdit} onDelete={setDeleting} onNew={openNew} />}
+        {dashboard.filter === "Overview" && <DashboardFooter user={auth.user} advance={dashboard.advance} onAdvance={dashboard.saveAdvance} />}
       </div>
     </section>
     {modal && <ReminderModal editing={editing} form={form} setForm={setForm} error={dashboard.error} busy={dashboard.busy} onClose={() => setModal(false)} onSubmit={(event) => dashboard.saveReminder(event, form, editing, () => setModal(false))} />}

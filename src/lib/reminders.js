@@ -34,7 +34,12 @@ export const dateLabel = (item) => {
 
 export const fromApi = (item) => {
   const date = new Date(item.dueAt);
-  return { ...item, date: localDate(date), time: `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}` };
+  return {
+    ...item,
+    completed: item.completed === true,
+    date: localDate(date),
+    time: `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`,
+  };
 };
 
 export const initialForm = () => ({ title: "", description: "", date: localDate(), time: `${String(new Date().getHours()).padStart(2, "0")}:00`, category: "Personal" });
