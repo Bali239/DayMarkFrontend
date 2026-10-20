@@ -9,7 +9,7 @@ import {
 const { Paragraph, Text, Title } = Typography;
 
 export function DashboardHeading({ user, onNew }) {
-  const firstName = user.name?.split(" ")[0] || "there";
+  const username = user?.name || "here";
   return (
     <div className="mb-7 flex flex-col gap-5 sm:mb-9 sm:flex-row sm:items-end sm:justify-between">
       <div>
@@ -23,11 +23,9 @@ export function DashboardHeading({ user, onNew }) {
             })
             .toUpperCase()}
         </Text>
-        <Title level={1} className="!mb-2 !mt-3 !text-3xl !tracking-[-0.05em] sm:!text-4xl">
-          A calmer kind of productive.
-        </Title>
+      
         <Paragraph className="!mb-0 !text-slate-600">
-          Welcome back, {firstName}. Here’s what’s on your mind.
+          Welcome back, {username}!. Here’s what’s on your mind.
         </Paragraph>
       </div>
       <Button
