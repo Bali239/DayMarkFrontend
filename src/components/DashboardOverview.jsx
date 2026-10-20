@@ -23,10 +23,8 @@ export function DashboardHeading({ user, onNew }) {
             })
             .toUpperCase()}
         </Text>
-      
-        <Paragraph className="!mb-0 !text-slate-600">
-          Welcome back, {username}!. Here’s what’s on your mind.
-        </Paragraph>
+
+        <Paragraph className="!mb-0 !text-slate-600">Welcome back, {username}!</Paragraph>
       </div>
       <Button
         type="primary"

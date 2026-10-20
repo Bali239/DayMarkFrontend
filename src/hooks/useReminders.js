@@ -133,12 +133,15 @@ export default function useReminders(token, auth) {
   const toggleDone = useCallback(
     async (item) => {
       try {
-        await toggleMutation.mutateAsync(item);
+        const updated = await toggleMutation.mutateAsync(item);
+        notify(
+          updated?.completed ? "Reminder marked as complete" : "Reminder marked as incomplete",
+        );
       } catch (cause) {
         handleFailure(cause);
       }
     },
-    [toggleMutation, handleFailure],
+    [toggleMutation, notify, handleFailure],
   );
 
   const removeReminder = useCallback(
