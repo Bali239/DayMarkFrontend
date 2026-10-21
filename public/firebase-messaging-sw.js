@@ -6,27 +6,23 @@ importScripts(
   "https://www.gstatic.com/firebasejs/11.10.0/firebase-messaging-compat.js"
 );
 
-firebase.initializeApp({
-  apiKey: "AIzaSyDigWSrUVW5D9lqK2N69avwfj6hBG5W1dE",
-  authDomain: "reminderapp-893d6.firebaseapp.com",
-  projectId: "reminderapp-893d6",
-  storageBucket: "reminderapp-893d6.firebasestorage.app",
-  messagingSenderId: "848813391180",
-  appId: "1:848813391180:web:47ad2e781ac9abf6a523e9",
-});
+let messaging = null;
 
-const messaging = firebase.messaging();
+self.addEventListener("message", (event) => {
+  if (event.data?.type !== "FIREBASE_CONFIG" || messaging) return;
 
-messaging.onBackgroundMessage((payload) => {
-  const title = payload.data?.title || "Reminder";
+  firebase.initializeApp(event.data.config);
+  messaging = firebase.messaging();
 
-  const options = {
-    body: payload.data?.body || "You have a reminder.",
-    icon: "/favicon.ico",
-    data: payload.data || {},
-  };
+  messaging.onBackgroundMessage((payload) => {
+    const title = payload.data?.title || "Reminder";
 
-  self.registration.showNotification(title, options);
+    self.registration.showNotification(title, {
+      body: payload.data?.body || "You have a reminder.",
+      icon: "/favicon.ico",
+      data: payload.data || {},
+    });
+  });
 });
 
 self.addEventListener("notificationclick", (event) => {
