@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, Checkbox, Empty, Input, Pagination, Segmented, Tag, Typography } from "antd";
+import { Button, Card, Checkbox, Empty, Input, Pagination, Segmented, Spin, Tag, Typography } from "antd";
 import {
   ArrowRightOutlined,
   CalendarOutlined,
@@ -82,6 +82,7 @@ export default function ReminderList({
   reminders,
   shown,
   total,
+  loading,
   pagination,
   filter,
   setFilter,
@@ -141,7 +142,11 @@ export default function ReminderList({
           className="!w-full sm:!max-w-64"
         />
       </div>
-      {shown.length ? (
+      {loading ? (
+        <div className="grid min-h-56 place-items-center" aria-live="polite">
+          <Spin description="Loading reminders…" />
+        </div>
+      ) : shown.length ? (
         <div>
           {shown.map((item) => (
             <ReminderRow

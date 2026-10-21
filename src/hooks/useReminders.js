@@ -201,6 +201,7 @@ export default function useReminders(token, auth) {
     busy: saveMutation.isPending,
     loading: remindersQuery.isLoading,
     fetching: remindersQuery.isFetching,
+    switching: remindersQuery.isFetching && remindersQuery.isPlaceholderData,
     saveReminder,
     toggleDone,
     removeReminder,

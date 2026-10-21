@@ -97,6 +97,7 @@ export default function Home() {
               reminders={dashboard.reminders}
               shown={dashboard.shown}
               total={dashboard.total}
+              loading={dashboard.switching}
               pagination={dashboard.pagination}
               filter={dashboard.filter}
               setFilter={dashboard.setFilter}
