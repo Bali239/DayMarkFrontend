@@ -10,14 +10,16 @@ import {
   PlusOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import { dateLabel } from "@/lib/reminders";
+import { useEffect, useState } from "react";
+import { dateLabel, timeLeftLabel } from "@/lib/reminders";
 
 const { Paragraph, Text, Title } = Typography;
 
-function ReminderRow({ item, onToggle, onEdit, onDelete }) {
+function ReminderRow({ item, now, onToggle, onEdit, onDelete }) {
   const categoryColor =
     { Personal: "purple", Work: "blue", Health: "green", Other: "default" }[item.category] ||
     "default";
+  const timeIsPast = new Date(item.dueAt).getTime() < now;
   return (
     <article className="group flex flex-col gap-4 border-b border-slate-100 px-4 py-4 last:border-b-0 sm:flex-row sm:items-center sm:px-5">
       <Checkbox
@@ -46,6 +48,13 @@ function ReminderRow({ item, onToggle, onEdit, onDelete }) {
         <CalendarOutlined className="text-violet-600" />
         <div>
           {dateLabel(item)}
+          {!item.completed && (
+            <Text
+              className={`!block !text-xs ${timeIsPast ? "!text-rose-600" : "!text-violet-600"}`}
+            >
+              {timeLeftLabel(item.dueAt, now)}
+            </Text>
+          )}
           <Text className="!block !text-xs !text-slate-400">
             {item.completed
               ? "Completed"
@@ -95,6 +104,12 @@ export default function ReminderList({
   onDelete,
   onNew,
 }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
+
   const listFilter = filter === "Overview" ? "Upcoming" : filter;
   const pageStart = (pagination.page - 1) * pagination.pageSize;
 
@@ -152,6 +167,7 @@ export default function ReminderList({
             <ReminderRow
               key={item.id}
               item={item}
+              now={now}
               onToggle={onToggle}
               onEdit={onEdit}
               onDelete={onDelete}

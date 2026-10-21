@@ -62,6 +62,28 @@ export const dateLabel = (item) => {
   return `${day} · ${parsed.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
 };
 
+export const timeLeftLabel = (dueAt, now = Date.now()) => {
+  const dueTime = new Date(dueAt).getTime();
+  if (Number.isNaN(dueTime)) return "Time unavailable";
+
+  const difference = dueTime - now;
+  if (Math.abs(difference) < 60_000) return "Due now";
+
+  let minutes = Math.ceil(Math.abs(difference) / 60_000);
+  const days = Math.floor(minutes / 1440);
+  minutes %= 1440;
+  const hours = Math.floor(minutes / 60);
+  minutes %= 60;
+  const parts = [];
+  if (days) parts.push(`${days} ${days === 1 ? "day" : "days"}`);
+  if (hours) parts.push(`${hours} ${hours === 1 ? "hour" : "hours"}`);
+  if (minutes && parts.length < 2)
+    parts.push(`${minutes} ${minutes === 1 ? "minute" : "minutes"}`);
+
+  const amount = parts.join(" ");
+  return difference > 0 ? `In ${amount}` : `Overdue by ${amount}`;
+};
+
 export const fromApi = (item) => {
   const date = new Date(item.dueAt);
   return {
