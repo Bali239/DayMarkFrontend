@@ -1,36 +1,15 @@
 
 importScripts(
-  "https://www.gstatic.com/firebasejs/11.10.0/firebase-app-compat.js"
+  "https://www.gstatic.com/firebasejs/13.0.0/firebase-app-compat.js"
 );
 importScripts(
-  "https://www.gstatic.com/firebasejs/11.10.0/firebase-messaging-compat.js"
+  "https://www.gstatic.com/firebasejs/13.0.0/firebase-messaging-compat.js"
 );
 
-let messaging = null;
-
-self.addEventListener("message", (event) => {
-  if (event.data?.type !== "FIREBASE_CONFIG") return;
-
-  try {
-    if (!messaging) {
-      firebase.initializeApp(event.data.config);
-      messaging = firebase.messaging();
-
-      messaging.onBackgroundMessage((payload) => {
-        const title = payload.data?.title || "Reminder";
-
-        self.registration.showNotification(title, {
-          body: payload.data?.body || "You have a reminder.",
-          icon: "/favicon.ico",
-          data: payload.data || {},
-        });
-      });
-    }
-    event.ports[0]?.postMessage({ type: "FIREBASE_READY" });
-  } catch (error) {
-    event.ports[0]?.postMessage({ type: "FIREBASE_ERROR", message: error.message });
-  }
-});
+// Initialize Firebase on every worker start. Service workers are stopped when
+// idle, so configuration sent only through postMessage would be lost before a
+// later background push arrives.
+importScripts("/firebase-messaging-config.js");
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();

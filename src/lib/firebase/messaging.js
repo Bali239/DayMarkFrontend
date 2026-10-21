@@ -6,19 +6,47 @@ import "@/lib/firebase/firebase";
 
 async function getMessagingApi() {
   if (typeof window === "undefined") return null;
+  const requiredConfig = [
+    ["NEXT_PUBLIC_FIREBASE_API_KEY", process.env.NEXT_PUBLIC_FIREBASE_API_KEY],
+    [
+      "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
+      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+    ],
+    [
+      "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
+      process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+    ],
+    ["NEXT_PUBLIC_FIREBASE_APP_ID", process.env.NEXT_PUBLIC_FIREBASE_APP_ID],
+    ["NEXT_PUBLIC_FIREBASE_VAPID_KEY", process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY],
+  ];
+  const missing = requiredConfig
+    .filter(([, value]) => !value)
+    .map(([name]) => name);
+  if (missing.length) {
+    throw new Error(
+      `Firebase push is not configured. Add ${missing.join(", ")} to Vercel and redeploy.`,
+    );
+  }
+
   const { getMessaging, getToken, isSupported, deleteToken, onMessage } =
     await import("firebase/messaging");
   if (!(await isSupported())) return null;
   return { messaging: getMessaging(getApp()), getToken, deleteToken, onMessage };
 }
 
+async function registerMessagingServiceWorker() {
+  const registration = await navigator.serviceWorker.register(
+    "/firebase-messaging-sw.js",
+    { updateViaCache: "none" },
+  );
+  await navigator.serviceWorker.ready;
+  return registration;
+}
+
 export async function getCurrentPushToken() {
   const api = await getMessagingApi();
   if (!api || Notification.permission !== "granted") return null;
-  const registration = await navigator.serviceWorker.getRegistration(
-    "/firebase-messaging-sw.js",
-  );
-  if (!registration) return null;
+  const registration = await registerMessagingServiceWorker();
   return api.getToken(api.messaging, {
     vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
     serviceWorkerRegistration: registration,
@@ -61,36 +89,7 @@ export async function requestNotificationPermission() {
     throw new Error("Firebase Messaging is not supported in this browser.");
   }
 
-  const registration = await navigator.serviceWorker.register(
-    "/firebase-messaging-sw.js"
-  );
-
-  await navigator.serviceWorker.ready;
-  const worker = registration.active || registration.waiting || registration.installing;
-  if (!worker) throw new Error("Firebase messaging service worker is unavailable.");
-
-  const config = {
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-    authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  };
-  const channel = new MessageChannel();
-  const workerReady = new Promise((resolve, reject) => {
-    const timeout = setTimeout(
-      () => reject(new Error("Firebase messaging service worker did not initialize.")),
-      5000,
-    );
-    channel.port1.onmessage = (event) => {
-      clearTimeout(timeout);
-      if (event.data?.type === "FIREBASE_READY") resolve();
-      else reject(new Error("Firebase messaging service worker failed to initialize."));
-    };
-  });
-  worker.postMessage({ type: "FIREBASE_CONFIG", config }, [channel.port2]);
-  await workerReady;
+  const registration = await registerMessagingServiceWorker();
 
   const token = await api.getToken(api.messaging, {
     vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
