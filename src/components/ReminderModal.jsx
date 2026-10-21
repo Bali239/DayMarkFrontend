@@ -1,9 +1,15 @@
 "use client";
 
-import { Button, Input, Modal, Select, TimePicker, Typography } from "antd";
+import { Button, Input, Modal, Select, Typography } from "antd";
 import { ArrowRightOutlined, CloseOutlined } from "@ant-design/icons";
-import dayjs from "dayjs";
-import { isPastDue, localDate, minimumDateTime } from "@/lib/reminders";
+import { useState } from "react";
+import {
+  isPastDue,
+  isValidDateValue,
+  isValidTimeValue,
+  localDate,
+  minimumDateTime,
+} from "@/lib/reminders";
 
 const { Text, Title } = Typography;
 const categories = ["Personal", "Work", "Health", "Other"].map((value) => ({
@@ -12,23 +18,17 @@ const categories = ["Personal", "Work", "Health", "Other"].map((value) => ({
 }));
 
 export default function ReminderModal({ editing, form, setForm, error, busy, onClose, onSubmit }) {
+  const [dueDateTouched, setDueDateTouched] = useState(false);
   const minDateTime = minimumDateTime();
   const timeIsPast = form.date === minDateTime.slice(0, 10);
   const invalidDueDate = isPastDue(form.date, form.time);
-  const disabledTime = () => {
-    if (!timeIsPast) return {};
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    return {
-      disabledHours: () => Array.from({ length: currentHour }, (_, hour) => hour),
-      disabledMinutes: (hour) =>
-        hour === currentHour
-          ? Array.from({ length: currentMinute + 1 }, (_, minute) => minute)
-          : [],
-    };
-  };
-
+  const dateError =
+    dueDateTouched &&
+    (!isValidDateValue(form.date) || form.date < localDate());
+  const timeError =
+    dueDateTouched &&
+    !dateError &&
+    (!isValidTimeValue(form.time) || invalidDueDate);
   return (
     <Modal
       open
@@ -65,7 +65,7 @@ export default function ReminderModal({ editing, form, setForm, error, busy, onC
           />
         </div>
         <label className="block space-y-2 text-sm font-medium text-slate-700">
-          Title
+          Title <span className="text-rose-600">*</span>
           <Input
             autoFocus
             required
@@ -89,36 +89,44 @@ export default function ReminderModal({ editing, form, setForm, error, busy, onC
         </label>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block space-y-2 text-sm font-medium text-slate-700">
-            Date
+            Date <span className="text-rose-600">*</span>
             <Input
               type="date"
               required
               min={localDate()}
               value={form.date}
-              onChange={(event) => setForm({ ...form, date: event.target.value })}
+              onChange={(event) => {
+                setDueDateTouched(true);
+                setForm({ ...form, date: event.target.value });
+              }}
             />
+            {dateError && (
+              <span role="alert" className="block text-sm font-normal text-rose-600">
+                Choose a valid date today or later.
+              </span>
+            )}
           </label>
           <label className="block space-y-2 text-sm font-medium text-slate-700">
-            Time
-            <TimePicker
+            Time <span className="text-rose-600">*</span>
+            <Input
+              type="time"
               aria-label="Reminder time"
-              format="HH:mm"
-              minuteStep={1}
-              changeOnScroll
-              disabledTime={disabledTime}
-              hideDisabledOptions
-              inputReadOnly
-              value={form.time ? dayjs(`${form.date}T${form.time}`) : null}
-              onChange={(time) => setForm({ ...form, time: time?.format("HH:mm") || "" })}
-              className="w-full"
+              required
+              step={60}
+              min={timeIsPast ? minDateTime.slice(11, 16) : undefined}
+              value={form.time}
+              onChange={(event) => {
+                setDueDateTouched(true);
+                setForm({ ...form, time: event.target.value });
+              }}
             />
+            {timeError && (
+              <span role="alert" className="block text-sm font-normal text-rose-600">
+                Enter a valid time in the future.
+              </span>
+            )}
           </label>
         </div>
-        {invalidDueDate && (
-          <div role="alert" className="-mt-3 text-sm text-rose-600">
-            Choose a date and time in the future.
-          </div>
-        )}
         <label className="block space-y-2 text-sm font-medium text-slate-700">
           Category
           <Select

@@ -21,12 +21,28 @@ export const dueIso = (date, time) => {
   return new Date(year, month - 1, day, hour, minute).toISOString();
 };
 
+export const isValidDateValue = (date) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "")) return false;
+  const [year, month, day] = date.split("-").map(Number);
+  const parsed = new Date(year, month - 1, day);
+  return (
+    parsed.getFullYear() === year &&
+    parsed.getMonth() === month - 1 &&
+    parsed.getDate() === day
+  );
+};
+
+export const isValidTimeValue = (time) => {
+  if (!/^\d{2}:\d{2}$/.test(time || "")) return false;
+  const [hour, minute] = time.split(":").map(Number);
+  return hour <= 23 && minute <= 59;
+};
+
 export const isPastDue = (date, time, now = new Date()) => {
-  if (!date || !time) return false;
+  if (!isValidDateValue(date) || !isValidTimeValue(time)) return true;
   const [year, month, day] = date.split("-").map(Number);
   const [hour, minute] = time.split(":").map(Number);
-  const dueAt = new Date(year, month - 1, day, hour, minute);
-  return Number.isNaN(dueAt.getTime()) || dueAt < now;
+  return new Date(year, month - 1, day, hour, minute) < now;
 };
 
 export const minimumDateTime = (date = new Date()) =>
@@ -56,13 +72,18 @@ export const fromApi = (item) => {
   };
 };
 
-export const initialForm = () => ({
-  title: "",
-  description: "",
-  date: localDate(),
-  time: `${String(new Date().getHours()).padStart(2, "0")}:00`,
-  category: "Personal",
-});
+export const initialForm = () => {
+  const nextHour = new Date();
+  nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
+
+  return {
+    title: "",
+    description: "",
+    date: localDate(nextHour),
+    time: `${String(nextHour.getHours()).padStart(2, "0")}:00`,
+    category: "Personal",
+  };
+};
 
 export async function request(path, token, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {

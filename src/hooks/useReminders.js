@@ -119,7 +119,7 @@ export default function useReminders(token, auth) {
       event.preventDefault();
       if (!form.title.trim() || !token) return;
       if (isPastDue(form.date, form.time)) {
-        setError("Choose a date and time in the future.");
+        setError("Enter a valid date and time in the future.");
         return;
       }
       setError("");
