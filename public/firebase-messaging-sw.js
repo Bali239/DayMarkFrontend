@@ -9,20 +9,27 @@ importScripts(
 let messaging = null;
 
 self.addEventListener("message", (event) => {
-  if (event.data?.type !== "FIREBASE_CONFIG" || messaging) return;
+  if (event.data?.type !== "FIREBASE_CONFIG") return;
 
-  firebase.initializeApp(event.data.config);
-  messaging = firebase.messaging();
+  try {
+    if (!messaging) {
+      firebase.initializeApp(event.data.config);
+      messaging = firebase.messaging();
 
-  messaging.onBackgroundMessage((payload) => {
-    const title = payload.data?.title || "Reminder";
+      messaging.onBackgroundMessage((payload) => {
+        const title = payload.data?.title || "Reminder";
 
-    self.registration.showNotification(title, {
-      body: payload.data?.body || "You have a reminder.",
-      icon: "/favicon.ico",
-      data: payload.data || {},
-    });
-  });
+        self.registration.showNotification(title, {
+          body: payload.data?.body || "You have a reminder.",
+          icon: "/favicon.ico",
+          data: payload.data || {},
+        });
+      });
+    }
+    event.ports[0]?.postMessage({ type: "FIREBASE_READY" });
+  } catch (error) {
+    event.ports[0]?.postMessage({ type: "FIREBASE_ERROR", message: error.message });
+  }
 });
 
 self.addEventListener("notificationclick", (event) => {
